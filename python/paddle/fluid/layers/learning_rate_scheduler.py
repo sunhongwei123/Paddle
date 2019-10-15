@@ -31,7 +31,7 @@ from ..framework import default_main_program, Parameter, unique_name, name_scope
 
 __all__ = [
     'exponential_decay', 'natural_exp_decay', 'inverse_time_decay',
-    'polynomial_decay', 'piecewise_decay', 'noam_decay', 'append_LARS'
+    'polynomial_decay', 'piecewise_decay', 'noam_decay', 'append_LARS','natural_decay'
 ]
 
 
@@ -306,7 +306,6 @@ def piecewise_decay(boundaries, values):
 
     return lr
 
-
 def append_LARS(params_grads, learning_rate, weight_decay):
     """
     Applies LARS (LAYER-WISE ADAPTIVE RATE SCALING) to learning rate for
@@ -346,3 +345,13 @@ def append_LARS(params_grads, learning_rate, weight_decay):
                     / _balanced_weight(param_norm, grad_norm)
             # set back param local learning rate
             param.optimize_attr['learning_rate'] = decayed_lr
+            
+            
+def natural_decay(LRmax, LRmin, change_steps):
+    with default_main_program()._lr_schedule_guard():
+        global_step = _decay_step_counter()
+        T1 = global_step % change_steps
+        lr = LRmin + (((math.pi / 2) - math.atan(1)) - ((math.pi / 2) - math.atan(change_steps - 1))) / (
+                (math.pi / 2) - ((math.pi / 2) - math.atan(change_steps - 1))) * (LRmax - LRmin)
+    return lr
+     
